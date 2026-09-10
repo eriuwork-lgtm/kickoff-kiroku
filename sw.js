@@ -1,5 +1,5 @@
 /* キックオフ記録 — Service Worker (offline support) */
-const CACHE = 'kickoff-v3';
+const CACHE = 'kickoff-v4';
 const CORE = [
   './',
   './index.html',
