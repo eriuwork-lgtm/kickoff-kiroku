@@ -30,9 +30,11 @@
     --pitch:#1f9d57;
     --pitch-deep:#157a41;
     --home:#2f6df0;
-    --home-soft:#e5edfe;
     --away:#e26235;
-    --away-soft:#fceae1;
+    --home-soft:color-mix(in srgb,var(--home) 15%,transparent);
+    --away-soft:color-mix(in srgb,var(--away) 15%,transparent);
+    --home-ink:#ffffff;
+    --away-ink:#ffffff;
     --shadow:0 1px 2px rgba(20,29,23,.06),0 6px 20px rgba(20,29,23,.06);
     --shadow-lift:0 10px 30px rgba(20,29,23,.14);
     --radius:16px;
@@ -44,14 +46,14 @@
     :root:not([data-theme="light"]){
       --ground:#0c1310;--panel:#131c17;--panel-2:#1a251e;--ink:#eaf1ea;--ink-soft:#a7b3aa;
       --ink-faint:#75837a;--line:#243027;--line-soft:#1e2822;--pitch:#31b86c;--pitch-deep:#249a55;
-      --home:#5b8bff;--home-soft:#18233a;--away:#f0764a;--away-soft:#33211a;
+      --home:#5b8bff;--away:#f0764a;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.32);--shadow-lift:0 12px 34px rgba(0,0,0,.5);
     }
   }
   :root[data-theme="dark"]{
     --ground:#0c1310;--panel:#131c17;--panel-2:#1a251e;--ink:#eaf1ea;--ink-soft:#a7b3aa;
     --ink-faint:#75837a;--line:#243027;--line-soft:#1e2822;--pitch:#31b86c;--pitch-deep:#249a55;
-    --home:#5b8bff;--home-soft:#18233a;--away:#f0764a;--away-soft:#33211a;
+    --home:#5b8bff;--away:#f0764a;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.32);--shadow-lift:0 12px 34px rgba(0,0,0,.5);
   }
 
@@ -133,8 +135,8 @@
     box-shadow:var(--shadow);transition:transform .12s,filter .12s;line-height:1.2}
   .goal-btn:active{transform:translateY(1px) scale(.99)}
   .goal-btn:hover{filter:brightness(1.05)}
-  .goal-btn.home{background:linear-gradient(160deg,var(--home),color-mix(in srgb,var(--home) 78%,#000))}
-  .goal-btn.away{background:linear-gradient(160deg,var(--away),color-mix(in srgb,var(--away) 82%,#000))}
+  .goal-btn.home{background:linear-gradient(160deg,var(--home),color-mix(in srgb,var(--home) 78%,#000));color:var(--home-ink)}
+  .goal-btn.away{background:linear-gradient(160deg,var(--away),color-mix(in srgb,var(--away) 82%,#000));color:var(--away-ink)}
   .goal-btn .gb-team{font-size:12px;font-weight:600;opacity:.9;letter-spacing:.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .goal-btn .gb-main{display:flex;align-items:center;gap:7px;font-size:18px}
   .goal-btn .ball{font-size:16px}
@@ -207,6 +209,17 @@
   .set-mins .steps{display:flex;gap:6px;margin-left:auto}
   .step{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);width:38px;height:38px;border-radius:10px;font-size:20px;cursor:pointer;font-family:var(--font-cond);font-weight:700}
   .step:hover{border-color:var(--pitch)}
+  .color-rows{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .color-row{display:flex;align-items:center;gap:11px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:9px 11px}
+  .color-row .cname{font-weight:700;font-size:14px}
+  .color-row .clab{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint);margin-left:auto}
+  .cinput{-webkit-appearance:none;appearance:none;border:none;background:none;width:44px;height:32px;padding:0;cursor:pointer;border-radius:8px}
+  .cinput::-webkit-color-swatch-wrapper{padding:0}
+  .cinput::-webkit-color-swatch{border:1px solid var(--line);border-radius:8px}
+  .cinput::-moz-color-swatch{border:1px solid var(--line);border-radius:8px}
+  .cdot{width:12px;height:12px;border-radius:4px}
+  .reset-colors{margin-top:10px;appearance:none;border:none;background:none;color:var(--ink-faint);cursor:pointer;font:inherit;font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
+  .reset-colors:hover{color:var(--pitch-deep)}
   .roster-team{margin-top:4px}
   .roster-team .rt-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .rt-dot{width:10px;height:10px;border-radius:3px}
@@ -349,6 +362,25 @@
     </div>
 
     <div class="set-group">
+      <label class="qlabel">チームカラー</label>
+      <div class="color-rows">
+        <div class="color-row">
+          <span class="cdot" id="cdotHome"></span>
+          <span class="cname" id="clHome">ホーム</span>
+          <span class="clab">Home</span>
+          <input type="color" class="cinput" id="colHome" aria-label="ホームの色">
+        </div>
+        <div class="color-row">
+          <span class="cdot" id="cdotAway"></span>
+          <span class="cname" id="clAway">アウェイ</span>
+          <span class="clab">Away</span>
+          <input type="color" class="cinput" id="colAway" aria-label="アウェイの色">
+        </div>
+      </div>
+      <button class="reset-colors" id="resetColors">既定の色に戻す</button>
+    </div>
+
+    <div class="set-group">
       <label class="qlabel" for="minsInput">1ハーフの時間</label>
       <div class="set-mins">
         <input id="minsInput" type="number" min="1" max="60" inputmode="numeric" value="15">
@@ -432,6 +464,7 @@
     scores:{home:0,away:0},
     roster:{home:[],away:[]},   // [{num,name}]
     meta:{title:"",comp:"",venue:""},
+    colors:{home:null,away:null},
     halfMinutes:15,
     half:1, running:false, elapsed:0, since:0,
     goals:[],                   // {id,team,scorer,assist,half,sec}
@@ -444,6 +477,7 @@
       if(!state.roster.home)state.roster.home=[];
       if(!state.roster.away)state.roster.away=[];
       if(!state.meta)state.meta={title:"",comp:"",venue:""};
+      if(!state.colors)state.colors={home:null,away:null};
       if(!state.halfMinutes)state.halfMinutes=15;}}}catch(e){}
   }
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
@@ -578,6 +612,9 @@
   function openInfo(){
     $("minsInput").value=state.halfMinutes;
     $("miTitle").value=state.meta.title||"";$("miComp").value=state.meta.comp||"";$("miVenue").value=state.meta.venue||"";
+    $("colHome").value=state.colors.home||DEF_HOME;$("colAway").value=state.colors.away||DEF_AWAY;
+    $("clHome").textContent=state.teams.home;$("clAway").textContent=state.teams.away;
+    applyColors();
     $("infoScrim").hidden=false;
   }
   function closeInfo(){$("infoScrim").hidden=true;}
@@ -621,6 +658,25 @@
     renderScores();renderLog();renderRun();save();
   }
 
+  /* team colors */
+  var DEF_HOME="#2f6df0", DEF_AWAY="#e26235";
+  function hexRgb(h){h=h.replace("#","");if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+  function lum(h){var c=hexRgb(h).map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];}
+  function inkFor(h){return lum(h)>0.55?"#141d17":"#ffffff";}
+  function toHex(n){n=Math.max(0,Math.min(255,Math.round(n)));return (n<16?"0":"")+n.toString(16);}
+  function lightenForDark(h){var rgb=hexRgb(h),l=lum(h);if(l>=0.42)return h;var t=(0.5-l)*1.1;t=Math.min(0.6,t);return "#"+rgb.map(function(v){return toHex(v+(255-v)*t);}).join("");}
+  function applyColors(){
+    var r=document.documentElement.style;
+    if(state.colors.home){r.setProperty("--home",state.colors.home);r.setProperty("--home-ink",inkFor(state.colors.home));}
+    else{r.removeProperty("--home");r.removeProperty("--home-ink");}
+    if(state.colors.away){r.setProperty("--away",state.colors.away);r.setProperty("--away-ink",inkFor(state.colors.away));}
+    else{r.removeProperty("--away");r.removeProperty("--away-ink");}
+    var ch=$("cdotHome"),ca=$("cdotAway");
+    if(ch)ch.style.background=state.colors.home||DEF_HOME;
+    if(ca)ca.style.background=state.colors.away||DEF_AWAY;
+  }
+  function cardColor(team){return lightenForDark(state.colors[team]||(team==="home"?"#5b8bff":"#f0764a"));}
+
   /* theme */
   function applyTheme(){if(state.theme==="dark"||state.theme==="light")document.documentElement.setAttribute("data-theme",state.theme);else document.documentElement.removeAttribute("data-theme");}
   function toggleTheme(){var cur=document.documentElement.getAttribute("data-theme");
@@ -644,7 +700,7 @@
     var c=document.createElement("canvas");c.width=W*scale;c.height=H*scale;
     var x=c.getContext("2d");x.scale(scale,scale);
     var F="'Barlow',system-ui,sans-serif",FC="'Barlow Semi Condensed','Barlow',sans-serif";
-    var HOME="#5b8bff",AWAY="#f0764a",CHALK="#eef3ec",MUT="#93a09a",FAINT="#5f6c62",GREEN="#54d68a";
+    var HOME=cardColor("home"),AWAY=cardColor("away"),CHALK="#eef3ec",MUT="#93a09a",FAINT="#5f6c62",GREEN="#54d68a";
 
     // background
     x.fillStyle="#0b1310";x.fillRect(0,0,W,H);
@@ -665,9 +721,10 @@
 
     // ===== hero score =====
     var hy=headH;
-    var lh=x.createLinearGradient(0,0,cx,0);lh.addColorStop(0,"rgba(91,139,255,0.24)");lh.addColorStop(1,"rgba(91,139,255,0)");
+    function rgba(hx,a){var c=hexRgb(hx);return "rgba("+c[0]+","+c[1]+","+c[2]+","+a+")";}
+    var lh=x.createLinearGradient(0,0,cx,0);lh.addColorStop(0,rgba(HOME,0.24));lh.addColorStop(1,rgba(HOME,0));
     x.fillStyle=lh;x.fillRect(0,hy,cx,heroH);
-    var la=x.createLinearGradient(cx,0,W,0);la.addColorStop(0,"rgba(240,118,74,0)");la.addColorStop(1,"rgba(240,118,74,0.24)");
+    var la=x.createLinearGradient(cx,0,W,0);la.addColorStop(0,rgba(AWAY,0));la.addColorStop(1,rgba(AWAY,0.24));
     x.fillStyle=la;x.fillRect(cx,hy,cx,heroH);
 
     function teamName(txt,ncx,color){
@@ -750,7 +807,7 @@
   }
 
   function init(){
-    load();applyTheme();
+    load();applyTheme();applyColors();
     renderNames();renderScores();renderLog();renderInfo();
     $("halfPill").textContent=state.half===2?"後半":"前半";
     if(state.half===2)$("halfBtn").textContent="試合終了";
@@ -775,6 +832,11 @@
     $("minsInput").addEventListener("change",function(){setMins(this.value);});
     function bindMeta(id,key){$(id).addEventListener("input",function(){state.meta[key]=this.value.trim();renderInfo();save();});}
     bindMeta("miTitle","title");bindMeta("miComp","comp");bindMeta("miVenue","venue");
+    $("colHome").addEventListener("input",function(){state.colors.home=this.value;applyColors();save();});
+    $("colAway").addEventListener("input",function(){state.colors.away=this.value;applyColors();save();});
+    $("resetColors").addEventListener("click",function(){
+      state.colors={home:null,away:null};$("colHome").value=DEF_HOME;$("colAway").value=DEF_AWAY;applyColors();save();
+    });
     $("minsUp").addEventListener("click",function(){setMins(state.halfMinutes+1);});
     $("minsDown").addEventListener("click",function(){setMins(state.halfMinutes-1);});
     $("addHome").addEventListener("click",function(){addPlayer("home");});
