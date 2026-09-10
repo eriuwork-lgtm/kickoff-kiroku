@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="サッカーの試合時間と得点を記録するアプリ">
+<meta name="theme-color" content="#0b1310">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="キックオフ記録">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>キックオフ記録</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+<style>
+  :root{
+    --ground:#e9ede4;
+    --panel:#f6f8f3;
+    --panel-2:#ffffff;
+    --ink:#141d17;
+    --ink-soft:#4b5750;
+    --ink-faint:#7b877f;
+    --line:#d4dbcf;
+    --line-soft:#e2e8dc;
+    --pitch:#1f9d57;
+    --pitch-deep:#157a41;
+    --home:#2f6df0;
+    --home-soft:#e5edfe;
+    --away:#e26235;
+    --away-soft:#fceae1;
+    --shadow:0 1px 2px rgba(20,29,23,.06),0 6px 20px rgba(20,29,23,.06);
+    --shadow-lift:0 10px 30px rgba(20,29,23,.14);
+    --radius:16px;
+    --radius-sm:11px;
+    --font:'Barlow',system-ui,-apple-system,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+    --font-cond:'Barlow Semi Condensed','Barlow',system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0c1310;--panel:#131c17;--panel-2:#1a251e;--ink:#eaf1ea;--ink-soft:#a7b3aa;
+      --ink-faint:#75837a;--line:#243027;--line-soft:#1e2822;--pitch:#31b86c;--pitch-deep:#249a55;
+      --home:#5b8bff;--home-soft:#18233a;--away:#f0764a;--away-soft:#33211a;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.32);--shadow-lift:0 12px 34px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0c1310;--panel:#131c17;--panel-2:#1a251e;--ink:#eaf1ea;--ink-soft:#a7b3aa;
+    --ink-faint:#75837a;--line:#243027;--line-soft:#1e2822;--pitch:#31b86c;--pitch-deep:#249a55;
+    --home:#5b8bff;--home-soft:#18233a;--away:#f0764a;--away-soft:#33211a;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.32);--shadow-lift:0 12px 34px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--ground);color:var(--ink);
+    font-family:var(--font);line-height:1.45;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+    display:flex;justify-content:center;
+  }
+  .wrap{width:100%;max-width:460px;display:flex;flex-direction:column;gap:14px}
+
+  header.app{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;padding-top:2px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0;flex:1 1 auto}
+  .htools{margin-left:auto}
+  .badge{width:30px;height:30px;border-radius:9px;flex:none;
+    background:linear-gradient(150deg,var(--pitch),var(--pitch-deep));position:relative;box-shadow:var(--shadow)}
+  .badge::before{content:"";position:absolute;inset:0;border-radius:9px;
+    background:
+      radial-gradient(circle at 50% 50%,transparent 5.5px,rgba(255,255,255,.55) 6px,transparent 6.5px),
+      linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)) 50% 0/1.4px 100% no-repeat}
+  .brand h1{font-family:var(--font-cond);font-weight:800;font-size:19px;margin:0;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .htools{display:flex;gap:7px;flex:none}
+  .icon-btn{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-soft);
+    height:38px;min-width:38px;padding:0 10px;border-radius:11px;flex:none;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;justify-content:center;font-size:15px;font-weight:600;transition:.15s;font-family:var(--font)}
+  .icon-btn:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .icon-btn:active{transform:scale(.94)}
+
+  .matchinfo{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:0 4px;margin-top:-4px}
+  .matchinfo[hidden]{display:none}
+  .mi-title{font-weight:700;font-size:15px;color:var(--ink)}
+  .mi-tag{font-size:12.5px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:5px}
+  .mi-tag::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--pitch);opacity:.7}
+  .mi-tag.comp::before{background:var(--pitch)}
+  .mi-tag.venue::before{background:var(--ink-faint)}
+
+  .board{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .score-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch}
+  .team{padding:16px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-width:0;position:relative}
+  .team.home{background:linear-gradient(180deg,var(--home-soft),transparent 62%)}
+  .team.away{background:linear-gradient(180deg,var(--away-soft),transparent 62%)}
+  .team .tstripe{height:4px;width:44px;border-radius:99px}
+  .home .tstripe{background:var(--home)}
+  .away .tstripe{background:var(--away)}
+  .tname{font-weight:700;font-size:15px;letter-spacing:.2px;max-width:100%;background:none;border:none;text-align:center;
+    color:var(--ink);font-family:var(--font);padding:2px 6px;border-radius:7px;cursor:text;line-height:1.2;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+  .tname:focus{outline:none;background:var(--panel-2);box-shadow:0 0 0 2px var(--pitch)}
+  .tlabel{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint)}
+  .home .tlabel{color:var(--home)}
+  .away .tlabel{color:var(--away)}
+  .bignum{font-family:var(--font-cond);font-weight:800;font-size:66px;line-height:.9;font-variant-numeric:tabular-nums}
+
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;
+    padding:16px 4px 14px;border-left:1px solid var(--line-soft);border-right:1px solid var(--line-soft);background:var(--panel-2);min-width:112px}
+  .half-pill{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--pitch-deep);
+    background:color-mix(in srgb,var(--pitch) 15%,transparent);padding:3px 10px;border-radius:99px;white-space:nowrap}
+  .clock{font-family:var(--font-cond);font-weight:700;font-size:40px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:6px}
+  .clock.stopped{color:var(--ink-faint)}
+  .added{font-size:11px;font-weight:700;color:var(--away);min-height:14px;letter-spacing:.3px}
+
+  .controls{display:grid;grid-template-columns:1.5fr 1fr;gap:1px;background:var(--line-soft);border-top:1px solid var(--line-soft)}
+  .ctrl{appearance:none;border:none;background:var(--panel-2);color:var(--ink);font-family:var(--font);font-weight:700;font-size:15px;
+    padding:14px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.12s}
+  .ctrl:hover{background:var(--panel)}
+  .ctrl:active{transform:scale(.985)}
+  .ctrl.primary{color:#fff;background:var(--pitch)}
+  .ctrl.primary:hover{background:var(--pitch-deep)}
+  .ctrl.primary.pause{background:var(--ink-soft)}
+  .ctrl .dot{width:9px;height:9px;border-radius:2px;background:currentColor}
+  .ctrl .tri{width:0;height:0;border-left:11px solid currentColor;border-top:7px solid transparent;border-bottom:7px solid transparent}
+  .ctrl:disabled{color:var(--ink-faint);cursor:default}
+
+  .goal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .goal-btn{appearance:none;border:none;border-radius:var(--radius);cursor:pointer;color:#fff;padding:15px 12px;
+    font-family:var(--font);font-weight:700;font-size:16px;display:flex;flex-direction:column;align-items:center;gap:3px;
+    box-shadow:var(--shadow);transition:transform .12s,filter .12s;line-height:1.2}
+  .goal-btn:active{transform:translateY(1px) scale(.99)}
+  .goal-btn:hover{filter:brightness(1.05)}
+  .goal-btn.home{background:linear-gradient(160deg,var(--home),color-mix(in srgb,var(--home) 78%,#000))}
+  .goal-btn.away{background:linear-gradient(160deg,var(--away),color-mix(in srgb,var(--away) 82%,#000))}
+  .goal-btn .gb-team{font-size:12px;font-weight:600;opacity:.9;letter-spacing:.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .goal-btn .gb-main{display:flex;align-items:center;gap:7px;font-size:18px}
+  .goal-btn .ball{font-size:16px}
+
+  .log-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .log-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px 11px 15px;border-bottom:1px solid var(--line-soft)}
+  .log-head h2{margin:0;font-family:var(--font-cond);font-weight:700;font-size:15px;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-soft)}
+  .log-head .rt{display:flex;align-items:center;gap:10px}
+  .log-head .count{font-size:12px;color:var(--ink-faint);font-weight:600;white-space:nowrap}
+  .png-btn{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-soft);
+    font:inherit;font-weight:700;font-size:12.5px;padding:7px 11px;border-radius:9px;cursor:pointer;white-space:nowrap}
+  .png-btn:hover{border-color:var(--pitch);color:var(--ink)}
+  .log-list{list-style:none;margin:0;padding:6px}
+  .log-empty{padding:26px 16px 30px;text-align:center;color:var(--ink-faint);font-size:14px}
+  .log-empty .em-ball{font-size:24px;display:block;width:24px;margin:0 auto 10px;opacity:.55;color:var(--pitch)}
+  .goal-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:10px 9px;border-radius:var(--radius-sm)}
+  .goal-item + .goal-item{margin-top:2px}
+  .gi-time{font-family:var(--font-cond);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;
+    background:var(--panel-2);border:1px solid var(--line-soft);border-radius:8px;padding:5px 7px;min-width:52px;text-align:center;line-height:1.1}
+  .gi-time small{display:block;font-family:var(--font);font-size:9px;font-weight:600;color:var(--ink-faint);letter-spacing:.3px}
+  .gi-body{min-width:0}
+  .gi-scorer{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gi-scorer .no-name{color:var(--ink-faint);font-weight:500}
+  .gi-assist{font-size:12px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gi-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .gi-chip{font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:2px 8px;border-radius:99px;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+  .gi-chip.home{color:var(--home);background:var(--home-soft)}
+  .gi-chip.away{color:var(--away);background:var(--away-soft)}
+  .gi-del{appearance:none;border:none;background:none;color:var(--ink-faint);cursor:pointer;font-size:12px;padding:2px 4px;border-radius:6px}
+  .gi-del:hover{color:var(--away)}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:2px 4px 4px;color:var(--ink-faint);font-size:12px}
+  .foot button{appearance:none;border:none;background:none;color:var(--ink-faint);cursor:pointer;font:inherit;text-decoration:underline;text-underline-offset:2px}
+  .foot button:hover{color:var(--away)}
+
+  /* sheets */
+  .scrim{position:fixed;inset:0;background:rgba(8,14,11,.5);backdrop-filter:blur(2px);display:flex;align-items:flex-end;justify-content:center;padding:16px;z-index:40;overflow:auto}
+  .scrim[hidden]{display:none}
+  .sheet{width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-lift);
+    padding:18px 18px calc(18px + env(safe-area-inset-bottom));animation:rise .22s cubic-bezier(.2,.8,.25,1);margin:auto 0 0}
+  @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+  @media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+  .sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+  .sheet-dot{width:12px;height:12px;border-radius:4px}
+  .sheet-dot.home{background:var(--home)}
+  .sheet-dot.away{background:var(--away)}
+  .sheet-head h3{margin:0;font-family:var(--font-cond);font-weight:800;font-size:19px}
+  .sheet-head .when{margin-left:auto;font-family:var(--font-cond);font-weight:700;font-size:15px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .sheet-x{margin-left:auto;appearance:none;border:none;background:none;color:var(--ink-faint);font-size:22px;line-height:1;cursor:pointer;padding:2px 4px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+  .field input{width:100%;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);border-radius:11px;padding:12px 13px;font:inherit;font-size:16px}
+  .field input:focus{outline:none;border-color:var(--pitch);box-shadow:0 0 0 3px color-mix(in srgb,var(--pitch) 22%,transparent)}
+  .sheet-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:6px}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:inherit;font-weight:700;font-size:15px;padding:13px;border-radius:12px;cursor:pointer}
+  .btn:active{transform:scale(.99)}
+  .btn.save{border:none;color:#fff;background:var(--pitch)}
+  .btn.save:hover{background:var(--pitch-deep)}
+  .quick{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+  .quick button{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-soft);font:inherit;font-size:13px;font-weight:600;padding:6px 11px;border-radius:99px;cursor:pointer}
+  .quick button:hover{border-color:var(--pitch);color:var(--ink)}
+  .quick.empty{display:none}
+  .qlabel{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-faint);margin-top:10px}
+
+  /* settings */
+  .set-group{margin-bottom:16px}
+  .set-mins{display:flex;align-items:center;gap:10px}
+  .set-mins input{width:90px;text-align:center;font-family:var(--font-cond);font-weight:700;font-size:18px}
+  .set-mins .unit{color:var(--ink-faint);font-size:14px;font-weight:600}
+  .set-mins .steps{display:flex;gap:6px;margin-left:auto}
+  .step{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);width:38px;height:38px;border-radius:10px;font-size:20px;cursor:pointer;font-family:var(--font-cond);font-weight:700}
+  .step:hover{border-color:var(--pitch)}
+  .roster-team{margin-top:4px}
+  .roster-team .rt-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .rt-dot{width:10px;height:10px;border-radius:3px}
+  .rt-dot.home{background:var(--home)}
+  .rt-dot.away{background:var(--away)}
+  .rt-head span{font-weight:700;font-size:14px}
+  .add-row{display:grid;grid-template-columns:64px 1fr auto;gap:7px}
+  .add-row input{border:1px solid var(--line);background:var(--panel-2);color:var(--ink);border-radius:10px;padding:10px;font:inherit;font-size:15px;width:100%}
+  .add-row input:focus{outline:none;border-color:var(--pitch)}
+  .add-row .addp{appearance:none;border:none;background:var(--pitch);color:#fff;border-radius:10px;padding:0 15px;font:inherit;font-weight:700;cursor:pointer}
+  .add-row .addp:hover{background:var(--pitch-deep)}
+  .players{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+  .players:empty::before{content:"まだ選手が登録されていません";color:var(--ink-faint);font-size:12.5px}
+  .pchip{display:inline-flex;align-items:center;gap:7px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:99px;padding:5px 6px 5px 11px;font-size:13.5px;font-weight:600}
+  .pchip .pnum{font-family:var(--font-cond);font-weight:800;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+  .pchip .prm{appearance:none;border:none;background:var(--line-soft);color:var(--ink-soft);width:19px;height:19px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;display:grid;place-items:center}
+  .pchip .prm:hover{background:var(--away);color:#fff}
+
+  /* png sheet */
+  .png-wrap{margin:2px 0 12px;border-radius:14px;overflow:hidden;border:1px solid var(--line-soft);background:var(--panel-2)}
+  .png-wrap img{display:block;width:100%;height:auto}
+  .png-hint{font-size:13px;color:var(--ink-soft);text-align:center;margin:0 0 4px;line-height:1.5}
+  .png-hint b{color:var(--ink)}
+
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="brand">
+      <div class="badge" aria-hidden="true"></div>
+      <h1>キックオフ記録</h1>
+    </div>
+    <div class="htools">
+      <button class="icon-btn" id="infoBtn" aria-label="試合情報"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>試合情報</span></button>
+      <button class="icon-btn" id="rosterBtn" aria-label="選手名簿"><i class="fa-solid fa-users" aria-hidden="true"></i><span>選手名簿</span></button>
+      <button class="icon-btn" id="themeBtn" title="表示切り替え" aria-label="ライト・ダークを切り替え"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button>
+    </div>
+  </header>
+
+  <div class="matchinfo" id="matchInfo" hidden></div>
+
+  <section class="board" aria-label="スコアボード">
+    <div class="score-row">
+      <div class="team home">
+        <span class="tstripe"></span>
+        <span class="tlabel">Home</span>
+        <input class="tname" id="nameHome" value="ホーム" maxlength="16" aria-label="ホームチーム名" spellcheck="false">
+        <span class="bignum" id="scoreHome">0</span>
+      </div>
+      <div class="center">
+        <span class="half-pill" id="halfPill">前半</span>
+        <span class="clock stopped" id="clock">00:00</span>
+        <span class="added" id="added"></span>
+      </div>
+      <div class="team away">
+        <span class="tstripe"></span>
+        <span class="tlabel">Away</span>
+        <input class="tname" id="nameAway" value="アウェイ" maxlength="16" aria-label="アウェイチーム名" spellcheck="false">
+        <span class="bignum" id="scoreAway">0</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctrl primary" id="startBtn"><i class="fa-solid fa-play" aria-hidden="true"></i><span>キックオフ</span></button>
+      <button class="ctrl" id="halfBtn">後半へ →</button>
+    </div>
+  </section>
+
+  <div class="goal-btns">
+    <button class="goal-btn home" id="goalHome">
+      <span class="gb-team" id="gbHome">ホーム</span>
+      <span class="gb-main"><i class="fa-solid fa-futbol ball" aria-hidden="true"></i>ゴール</span>
+    </button>
+    <button class="goal-btn away" id="goalAway">
+      <span class="gb-team" id="gbAway">アウェイ</span>
+      <span class="gb-main"><i class="fa-solid fa-futbol ball" aria-hidden="true"></i>ゴール</span>
+    </button>
+  </div>
+
+  <section class="log-card">
+    <div class="log-head">
+      <h2>得点記録</h2>
+      <div class="rt">
+        <span class="count" id="logCount">0 得点</span>
+        <button class="png-btn" id="pngBtn"><i class="fa-solid fa-image" aria-hidden="true"></i> 画像で保存</button>
+      </div>
+    </div>
+    <ul class="log-list" id="logList"></ul>
+  </section>
+
+  <div class="foot">
+    <span id="matchMeta"></span>
+    <button id="resetBtn">試合をリセット</button>
+  </div>
+</div>
+
+<!-- Goal sheet -->
+<div class="scrim" id="scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <span class="sheet-dot" id="sheetDot"></span>
+      <h3 id="sheetTitle">ゴール</h3>
+      <span class="when" id="sheetWhen">前半 00:00</span>
+    </div>
+    <div class="field">
+      <label for="fScorer">得点者</label>
+      <input id="fScorer" type="text" placeholder="名前・背番号（任意）" autocomplete="off">
+      <div class="quick" id="quickScorers"></div>
+    </div>
+    <div class="field">
+      <label for="fAssist">アシスト</label>
+      <input id="fAssist" type="text" placeholder="任意" autocomplete="off">
+      <div class="quick" id="quickAssists"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn" id="cancelGoal">キャンセル</button>
+      <button class="btn save" id="saveGoal">得点を記録</button>
+    </div>
+  </div>
+</div>
+
+<!-- 試合情報 sheet -->
+<div class="scrim" id="infoScrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="sheet-head">
+      <h3 id="infoTitle">🏁 試合情報</h3>
+      <button class="sheet-x" id="infoClose" aria-label="閉じる">×</button>
+    </div>
+
+    <div class="set-group">
+      <label class="qlabel" for="miTitle">対戦カード・大会・会場</label>
+      <div class="field" style="margin:8px 0 10px">
+        <input id="miTitle" type="text" placeholder="対戦カードのタイトル（例：練習試合 第1試合）" maxlength="40" autocomplete="off">
+      </div>
+      <div class="add-row" style="grid-template-columns:1fr 1fr">
+        <input id="miComp" type="text" placeholder="大会名" maxlength="30" autocomplete="off">
+        <input id="miVenue" type="text" placeholder="会場" maxlength="30" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="set-group">
+      <label class="qlabel" for="minsInput">1ハーフの時間</label>
+      <div class="set-mins">
+        <input id="minsInput" type="number" min="1" max="60" inputmode="numeric" value="15">
+        <span class="unit">分</span>
+        <div class="steps">
+          <button class="step" id="minsDown" aria-label="1分減らす">−</button>
+          <button class="step" id="minsUp" aria-label="1分増やす">+</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn save" id="infoDone" style="width:100%;margin-top:4px">完了</button>
+  </div>
+</div>
+
+<!-- 選手名簿 sheet -->
+<div class="scrim" id="rosterScrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rosterTitle">
+    <div class="sheet-head">
+      <h3 id="rosterTitle">👥 選手名簿</h3>
+      <button class="sheet-x" id="rosterClose" aria-label="閉じる">×</button>
+    </div>
+
+    <div class="set-group roster-team">
+      <div class="rt-head"><span class="rt-dot home"></span><span id="rtNameHome">ホーム の名簿</span></div>
+      <div class="add-row">
+        <input id="numHome" type="text" placeholder="番号" maxlength="3" inputmode="numeric" aria-label="ホーム 背番号">
+        <input id="pnameHome" type="text" placeholder="選手名" maxlength="20" aria-label="ホーム 選手名">
+        <button class="addp" id="addHome">追加</button>
+      </div>
+      <div class="players" id="playersHome"></div>
+    </div>
+
+    <div class="set-group roster-team">
+      <div class="rt-head"><span class="rt-dot away"></span><span id="rtNameAway">アウェイ の名簿</span></div>
+      <div class="add-row">
+        <input id="numAway" type="text" placeholder="番号" maxlength="3" inputmode="numeric" aria-label="アウェイ 背番号">
+        <input id="pnameAway" type="text" placeholder="選手名" maxlength="20" aria-label="アウェイ 選手名">
+        <button class="addp" id="addAway">追加</button>
+      </div>
+      <div class="players" id="playersAway"></div>
+    </div>
+
+    <button class="btn save" id="rosterDone" style="width:100%;margin-top:4px">完了</button>
+  </div>
+</div>
+
+<!-- Confirm sheet -->
+<div class="scrim" id="confScrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="confTitle" style="max-width:400px">
+    <div class="sheet-head"><h3 id="confTitle">確認</h3></div>
+    <p id="confMsg" style="margin:0 0 16px;color:var(--ink-soft);font-size:14.5px;line-height:1.6"></p>
+    <div class="sheet-actions">
+      <button class="btn" id="confNo">キャンセル</button>
+      <button class="btn save" id="confYes" style="background:var(--away)">実行する</button>
+    </div>
+  </div>
+</div>
+
+<!-- PNG sheet -->
+<div class="scrim" id="pngScrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pngTitle">
+    <div class="sheet-head">
+      <h3 id="pngTitle">記録カード</h3>
+      <button class="sheet-x" id="pngClose" aria-label="閉じる">×</button>
+    </div>
+    <div class="png-wrap"><img id="pngImg" alt="試合記録カード"></div>
+    <p class="png-hint">スマホは画像を<b>長押し</b>して「写真に保存」<br>PCは画像を<b>右クリック</b>して保存できます</p>
+    <button class="btn save" id="pngDone" style="width:100%">閉じる</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="kickoff-tracker-v1";
+  var $=function(id){return document.getElementById(id);};
+
+  var state={
+    teams:{home:"ホーム",away:"アウェイ"},
+    scores:{home:0,away:0},
+    roster:{home:[],away:[]},   // [{num,name}]
+    meta:{title:"",comp:"",venue:""},
+    halfMinutes:15,
+    half:1, running:false, elapsed:0, since:0,
+    goals:[],                   // {id,team,scorer,assist,half,sec}
+    startedAt:null, theme:null
+  };
+
+  function load(){
+    try{var raw=localStorage.getItem(KEY);if(raw){var s=JSON.parse(raw);if(s&&typeof s==="object"){state=Object.assign(state,s);
+      if(!state.roster)state.roster={home:[],away:[]};
+      if(!state.roster.home)state.roster.home=[];
+      if(!state.roster.away)state.roster.away=[];
+      if(!state.meta)state.meta={title:"",comp:"",venue:""};
+      if(!state.halfMinutes)state.halfMinutes=15;}}}catch(e){}
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+  function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML;}
+  function halfSec(){return state.halfMinutes*60;}
+
+  /* clock */
+  function curMs(){var ms=state.elapsed;if(state.running&&state.since)ms+=Date.now()-state.since;return ms;}
+  function curSec(){return Math.floor(curMs()/1000);}
+  function displaySec(){return (state.half===2?halfSec():0)+curSec();}
+  function fmt(t){var m=Math.floor(t/60),s=t%60;return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;}
+  function renderClock(){
+    $("clock").textContent=fmt(displaySec());
+    $("clock").classList.toggle("stopped",!state.running);
+    var over=curSec()-halfSec();
+    $("added").textContent=over>0?"+"+Math.ceil(over/60):"";
+  }
+  var ticker=null;
+  function startTicker(){if(!ticker)ticker=setInterval(renderClock,250);}
+  function stopTicker(){if(ticker){clearInterval(ticker);ticker=null;}}
+
+  function toggleRun(){
+    if(state.running){state.elapsed=curMs();state.running=false;state.since=0;stopTicker();}
+    else{if(!state.startedAt)state.startedAt=Date.now();state.running=true;state.since=Date.now();startTicker();}
+    renderRun();save();
+  }
+  function renderRun(){
+    var b=$("startBtn");
+    if(state.running){b.classList.add("pause");b.innerHTML='<i class="fa-solid fa-pause" aria-hidden="true"></i><span>一時停止</span>';}
+    else{b.classList.remove("pause");
+      var label=(curMs()>0||state.half===2)?"再開":"キックオフ";
+      b.innerHTML='<i class="fa-solid fa-play" aria-hidden="true"></i><span>'+label+'</span>';}
+    renderClock();
+  }
+  function toHalf2(){
+    if(state.half===1){
+      state.half=2;state.elapsed=0;state.since=state.running?Date.now():0;
+      $("halfPill").textContent="後半";$("halfBtn").textContent="試合終了";
+      renderRun();save();
+    }else{
+      if(state.running)toggleRun();
+      $("halfBtn").textContent="終了済み";$("halfBtn").disabled=true;save();
+    }
+  }
+
+  /* render */
+  function renderScores(){$("scoreHome").textContent=state.scores.home;$("scoreAway").textContent=state.scores.away;}
+  function renderNames(){
+    $("nameHome").value=state.teams.home;$("nameAway").value=state.teams.away;
+    $("gbHome").textContent=state.teams.home;$("gbAway").textContent=state.teams.away;
+    $("rtNameHome").textContent=state.teams.home+" の名簿";
+    $("rtNameAway").textContent=state.teams.away+" の名簿";
+  }
+  function renderLog(){
+    var list=$("logList"),n=state.goals.length;
+    $("logCount").textContent=n+" 得点";
+    if(n===0){list.innerHTML='<li class="log-empty"><i class="fa-solid fa-futbol em-ball" aria-hidden="true"></i>まだ得点はありません。<br>ゴールが決まったら下のボタンで記録します。</li>';renderMeta();return;}
+    var sorted=state.goals.slice().sort(function(a,b){if(a.half!==b.half)return a.half-b.half;return a.sec-b.sec;});
+    var html="";
+    for(var i=0;i<sorted.length;i++){
+      var g=sorted[i],name=state.teams[g.team];
+      var scorer=g.scorer?esc(g.scorer):'<span class="no-name">得点者未記入</span>';
+      var assist=g.assist?'<div class="gi-assist">A: '+esc(g.assist)+'</div>':'';
+      var mm=Math.floor(g.sec/60),ss=g.sec%60;
+      html+='<li class="goal-item">'
+        +'<span class="gi-time">'+(mm<10?"0":"")+mm+"'"+(ss<10?"0":"")+ss+'<small>'+(g.half===2?"後半":"前半")+'</small></span>'
+        +'<div class="gi-body"><div class="gi-scorer">'+scorer+'</div>'+assist+'</div>'
+        +'<div class="gi-side"><span class="gi-chip '+g.team+'">'+esc(name)+'</span>'
+        +'<button class="gi-del" data-del="'+g.id+'" aria-label="この得点を削除">取消</button></div></li>';
+    }
+    list.innerHTML=html;renderMeta();
+  }
+  function renderInfo(){
+    var mi=state.meta||{},strip=$("matchInfo"),parts=[];
+    if(mi.title)parts.push('<span class="mi-title">'+esc(mi.title)+'</span>');
+    if(mi.comp)parts.push('<span class="mi-tag comp">'+esc(mi.comp)+'</span>');
+    if(mi.venue)parts.push('<span class="mi-tag venue">'+esc(mi.venue)+'</span>');
+    if(parts.length){strip.innerHTML=parts.join("");strip.hidden=false;}
+    else{strip.innerHTML="";strip.hidden=true;}
+  }
+  function renderMeta(){
+    var m=$("matchMeta");
+    if(state.startedAt){var d=new Date(state.startedAt);
+      m.textContent=d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" キックオフ "+(d.getHours()<10?"0":"")+d.getHours()+":"+(d.getMinutes()<10?"0":"")+d.getMinutes();}
+    else m.textContent="未開始";
+  }
+
+  /* goal modal */
+  var pending=null;
+  function playerLabel(p){return p.num?(p.num+" "+p.name):p.name;}
+  function openGoal(team){
+    pending={team:team,half:state.half,sec:displaySec()};
+    $("sheetTitle").textContent=state.teams[team]+" のゴール";
+    $("sheetDot").className="sheet-dot "+team;
+    var mm=Math.floor(pending.sec/60),ss=pending.sec%60;
+    $("sheetWhen").textContent=(pending.half===2?"後半 ":"前半 ")+(mm<10?"0":"")+mm+":"+(ss<10?"0":"")+ss;
+    $("fScorer").value="";$("fAssist").value="";
+    buildQuick(team);
+    $("scrim").hidden=false;
+    setTimeout(function(){$("fScorer").focus();},60);
+  }
+  function nameOptions(team){
+    var out=[],seen={};
+    state.roster[team].forEach(function(p){var l=playerLabel(p);if(!seen[l]){seen[l]=1;out.push(l);}});
+    for(var i=state.goals.length-1;i>=0;i--){var g=state.goals[i];
+      if(g.team===team){[g.scorer,g.assist].forEach(function(v){if(v&&!seen[v]){seen[v]=1;out.push(v);}});}}
+    return out;
+  }
+  function buildQuick(team){
+    var names=nameOptions(team);
+    var qs=$("quickScorers"),qa=$("quickAssists");
+    if(names.length===0){qs.className="quick empty";qs.innerHTML="";qa.className="quick empty";qa.innerHTML="";return;}
+    var chips=names.slice(0,14).map(function(nm){return '<button type="button" data-name="'+esc(nm)+'">'+esc(nm)+'</button>';}).join("");
+    qs.className="quick";qs.innerHTML=chips;
+    qa.className="quick";qa.innerHTML=chips;
+  }
+  function closeGoal(){$("scrim").hidden=true;pending=null;}
+  function commitGoal(){
+    if(!pending)return;
+    state.scores[pending.team]++;
+    state.goals.push({id:Date.now()+"-"+Math.random().toString(36).slice(2,7),team:pending.team,
+      scorer:$("fScorer").value.trim(),assist:$("fAssist").value.trim(),half:pending.half,sec:pending.sec});
+    closeGoal();renderScores();renderLog();save();
+  }
+  function delGoal(id){
+    var idx=state.goals.findIndex(function(g){return g.id===id;});if(idx<0)return;
+    var g=state.goals[idx];if(state.scores[g.team]>0)state.scores[g.team]--;
+    state.goals.splice(idx,1);renderScores();renderLog();save();
+  }
+
+  /* settings + roster */
+  function openInfo(){
+    $("minsInput").value=state.halfMinutes;
+    $("miTitle").value=state.meta.title||"";$("miComp").value=state.meta.comp||"";$("miVenue").value=state.meta.venue||"";
+    $("infoScrim").hidden=false;
+  }
+  function closeInfo(){$("infoScrim").hidden=true;}
+  function openRoster(){renderPlayers("home");renderPlayers("away");$("rosterScrim").hidden=false;}
+  function closeRoster(){$("rosterScrim").hidden=true;}
+  function setMins(v){v=Math.max(1,Math.min(60,parseInt(v,10)||15));state.halfMinutes=v;$("minsInput").value=v;renderClock();save();}
+  function renderPlayers(team){
+    var box=$(team==="home"?"playersHome":"playersAway");
+    box.innerHTML=state.roster[team].map(function(p,i){
+      return '<span class="pchip">'+(p.num?'<span class="pnum">'+esc(p.num)+'</span>':'')
+        +'<span>'+esc(p.name)+'</span>'
+        +'<button class="prm" data-team="'+team+'" data-i="'+i+'" aria-label="削除">×</button></span>';
+    }).join("");
+  }
+  function addPlayer(team){
+    var numEl=$(team==="home"?"numHome":"numAway"),nameEl=$(team==="home"?"pnameHome":"pnameAway");
+    var name=nameEl.value.trim();if(!name)return;
+    state.roster[team].push({num:numEl.value.trim(),name:name});
+    numEl.value="";nameEl.value="";nameEl.focus();
+    renderPlayers(team);save();
+  }
+  function removePlayer(team,i){state.roster[team].splice(i,1);renderPlayers(team);save();}
+
+  /* in-app confirm (sandbox blocks window.confirm) */
+  var confCb=null;
+  function askConfirm(title,msg,yesLabel,cb){
+    $("confTitle").textContent=title;$("confMsg").textContent=msg;
+    $("confYes").textContent=yesLabel;confCb=cb;$("confScrim").hidden=false;
+  }
+  function closeConfirm(){$("confScrim").hidden=true;confCb=null;}
+
+  /* reset */
+  function resetMatch(){
+    askConfirm("試合をリセット","スコア・時間・得点記録がすべて消えます。チーム名・名簿・試合時間・試合情報は残ります。",
+      "リセットする",doReset);
+  }
+  function doReset(){
+    state.scores={home:0,away:0};state.half=1;state.running=false;state.elapsed=0;state.since=0;
+    state.goals=[];state.startedAt=null;stopTicker();
+    $("halfPill").textContent="前半";$("halfBtn").textContent="後半へ →";$("halfBtn").disabled=false;
+    renderScores();renderLog();renderRun();save();
+  }
+
+  /* theme */
+  function applyTheme(){if(state.theme==="dark"||state.theme==="light")document.documentElement.setAttribute("data-theme",state.theme);else document.documentElement.removeAttribute("data-theme");}
+  function toggleTheme(){var cur=document.documentElement.getAttribute("data-theme");
+    var isDark=cur?cur==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;
+    state.theme=isDark?"light":"dark";applyTheme();save();}
+
+  /* ---- PNG card ---- */
+  function makeCard(){
+    var goals=state.goals.slice().sort(function(a,b){if(a.half!==b.half)return a.half-b.half;return a.sec-b.sec;});
+    var home=goals.filter(function(g){return g.team==="home";});
+    var away=goals.filter(function(g){return g.team==="away";});
+    var scale=Math.min(3,Math.max(2,window.devicePixelRatio||2));
+    var W=680,P=44,cx=W/2;
+    var mi=state.meta||{};
+    var metaTxt=[mi.title,mi.comp,mi.venue].filter(Boolean).join("     ·     ");
+    var headH=metaTxt?104:72, heroH=222, rowH=52, footH=64;
+    var rows=Math.max(home.length,away.length);
+    var goalsH=rows?(46+rows*rowH+20):108;
+    var H=headH+heroH+goalsH+footH;
+
+    var c=document.createElement("canvas");c.width=W*scale;c.height=H*scale;
+    var x=c.getContext("2d");x.scale(scale,scale);
+    var F="'Barlow',system-ui,sans-serif",FC="'Barlow Semi Condensed','Barlow',sans-serif";
+    var HOME="#5b8bff",AWAY="#f0764a",CHALK="#eef3ec",MUT="#93a09a",FAINT="#5f6c62",GREEN="#54d68a";
+
+    // background
+    x.fillStyle="#0b1310";x.fillRect(0,0,W,H);
+    x.fillStyle="rgba(255,255,255,0.014)";
+    for(var s=0;s<W;s+=60){x.fillRect(s,0,30,H);}
+    x.textBaseline="alphabetic";
+
+    // ===== header =====
+    x.fillStyle="#0e1a14";x.fillRect(0,0,W,headH);
+    var ga=x.createLinearGradient(0,0,W,0);ga.addColorStop(0,"#1f9d57");ga.addColorStop(1,"#37c074");
+    x.fillStyle=ga;x.fillRect(0,0,W,5);
+    x.textAlign="left";x.font="800 16px "+FC;x.fillStyle=GREEN;
+    x.fillText("MATCH REPORT",P,46);
+    x.textAlign="right";x.font="600 14px "+F;x.fillStyle=MUT;
+    var dstr="";if(state.startedAt){var d=new Date(state.startedAt);dstr=d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate();}
+    x.fillText(dstr,W-P,46);
+    if(metaTxt){x.textAlign="left";x.font="700 18px "+F;x.fillStyle="#e6f1ea";x.fillText(clip(x,metaTxt,W-2*P),P,84);}
+
+    // ===== hero score =====
+    var hy=headH;
+    var lh=x.createLinearGradient(0,0,cx,0);lh.addColorStop(0,"rgba(91,139,255,0.24)");lh.addColorStop(1,"rgba(91,139,255,0)");
+    x.fillStyle=lh;x.fillRect(0,hy,cx,heroH);
+    var la=x.createLinearGradient(cx,0,W,0);la.addColorStop(0,"rgba(240,118,74,0)");la.addColorStop(1,"rgba(240,118,74,0.24)");
+    x.fillStyle=la;x.fillRect(cx,hy,cx,heroH);
+
+    function teamName(txt,ncx,color){
+      var sz=25;x.font="700 "+sz+"px "+F;
+      while(sz>15&&x.measureText(txt).width>250){sz--;x.font="700 "+sz+"px "+F;}
+      x.textAlign="center";x.fillStyle=color;x.fillText(txt,ncx,hy+54);
+      x.fillStyle=color;x.fillRect(ncx-28,hy+64,56,4);
+    }
+    teamName(state.teams.home,cx-152,HOME);
+    teamName(state.teams.away,cx+152,AWAY);
+    // big scores
+    x.textAlign="center";x.font="800 92px "+FC;x.fillStyle=CHALK;
+    x.fillText(String(state.scores.home),cx-72,hy+156);
+    x.fillText(String(state.scores.away),cx+72,hy+156);
+    x.font="700 38px "+FC;x.fillStyle=FAINT;x.fillText("–",cx,hy+142);
+    // status chip
+    var status=$("halfBtn").disabled?"試合終了":(state.half===2?"後半 "+fmt(displaySec()):"前半 "+fmt(displaySec()));
+    x.font="700 14px "+FC;var tw=x.measureText(status).width,chw=tw+30,chx=cx-chw/2,chyy=hy+182;
+    roundRect(x,chx,chyy,chw,27,13);x.fillStyle="rgba(255,255,255,0.08)";x.fill();
+    x.fillStyle=GREEN;x.textAlign="center";x.fillText(status,cx,chyy+18);
+
+    // ===== 得点経過 timeline =====
+    var ty=headH+heroH;
+    x.textAlign="center";x.font="800 14px "+FC;x.fillStyle=MUT;
+    x.fillText("得 点 経 過",cx,ty+30);
+    var spineTop=ty+46;
+    if(!rows){
+      x.fillStyle=FAINT;x.font="500 15px "+F;x.textAlign="center";
+      x.fillText("得点はありませんでした",cx,ty+80);
+    }else{
+      var spineBot=spineTop+rows*rowH;
+      x.strokeStyle="rgba(255,255,255,0.10)";x.lineWidth=2;
+      x.beginPath();x.moveTo(cx,spineTop-6);x.lineTo(cx,spineBot-14);x.stroke();
+      for(var i=0;i<rows;i++){
+        var ry=spineTop+16+i*rowH;
+        drawEntry(home[i],true,ry);
+        drawEntry(away[i],false,ry);
+      }
+    }
+    function drawEntry(g,isHome,ry){
+      if(!g)return;
+      var col=isHome?HOME:AWAY,pad=22;
+      var mm=Math.floor(g.sec/60),tstr=mm+"'";
+      // timeline node
+      x.beginPath();x.arc(cx,ry-5,5,0,7);x.fillStyle=col;x.fill();
+      x.lineWidth=3;x.strokeStyle="#0b1310";x.stroke();
+      if(isHome){
+        x.textAlign="right";
+        x.font="800 21px "+FC;x.fillStyle=col;x.fillText(tstr,cx-pad,ry);
+        var mw=x.measureText(tstr).width;
+        x.font="600 18px "+F;x.fillStyle=CHALK;
+        x.fillText(clip(x,g.scorer||"（未記入）",cx-pad-mw-14-P),cx-pad-mw-14,ry);
+        if(g.assist){x.font="500 12.5px "+F;x.fillStyle=MUT;x.fillText(clip(x,"A: "+g.assist,cx-pad-P),cx-pad,ry+18);}
+      }else{
+        x.textAlign="left";
+        x.font="800 21px "+FC;x.fillStyle=col;x.fillText(tstr,cx+pad,ry);
+        var mw2=x.measureText(tstr).width;
+        x.font="600 18px "+F;x.fillStyle=CHALK;
+        x.fillText(clip(x,g.scorer||"（未記入）",W-P-(cx+pad+mw2+14)),cx+pad+mw2+14,ry);
+        if(g.assist){x.font="500 12.5px "+F;x.fillStyle=MUT;x.fillText(clip(x,"A: "+g.assist,W-P-(cx+pad)),cx+pad,ry+18);}
+      }
+    }
+
+    // ===== footer =====
+    var fy=H-footH;
+    x.strokeStyle="rgba(255,255,255,0.09)";x.lineWidth=1;x.beginPath();x.moveTo(P,fy+8);x.lineTo(W-P,fy+8);x.stroke();
+    x.textAlign="left";x.font="600 13px "+F;x.fillStyle=FAINT;
+    x.fillText("1ハーフ "+state.halfMinutes+"分",P,fy+38);
+    x.textAlign="right";x.font="800 13px "+FC;x.fillStyle=GREEN;
+    x.fillText("⚽ キックオフ記録",W-P,fy+38);
+
+    return c.toDataURL("image/png");
+  }
+  function clip(x,t,maxW){if(x.measureText(t).width<=maxW)return t;var e="…";while(t.length&&x.measureText(t+e).width>maxW)t=t.slice(0,-1);return t+e;}
+  function fitText(x,t,cx,cy,maxW,fam,pre){var sz=22;x.font=pre+sz+"px "+fam;while(sz>13&&x.measureText(t).width>maxW){sz--;x.font=pre+sz+"px "+fam;}x.fillText(t,cx,cy);}
+  function roundRect(x,px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
+  function openPng(){
+    var draw=function(){try{$("pngImg").src=makeCard();}catch(e){}$("pngScrim").hidden=false;};
+    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(draw);setTimeout(draw,400);}else draw();
+  }
+
+  function init(){
+    load();applyTheme();
+    renderNames();renderScores();renderLog();renderInfo();
+    $("halfPill").textContent=state.half===2?"後半":"前半";
+    if(state.half===2)$("halfBtn").textContent="試合終了";
+    renderRun();
+    if(state.running)startTicker();
+
+    $("startBtn").addEventListener("click",toggleRun);
+    $("halfBtn").addEventListener("click",toHalf2);
+    $("goalHome").addEventListener("click",function(){openGoal("home");});
+    $("goalAway").addEventListener("click",function(){openGoal("away");});
+    $("saveGoal").addEventListener("click",commitGoal);
+    $("cancelGoal").addEventListener("click",closeGoal);
+    $("resetBtn").addEventListener("click",resetMatch);
+    $("themeBtn").addEventListener("click",toggleTheme);
+
+    $("infoBtn").addEventListener("click",openInfo);
+    $("infoClose").addEventListener("click",closeInfo);
+    $("infoDone").addEventListener("click",closeInfo);
+    $("rosterBtn").addEventListener("click",openRoster);
+    $("rosterClose").addEventListener("click",closeRoster);
+    $("rosterDone").addEventListener("click",closeRoster);
+    $("minsInput").addEventListener("change",function(){setMins(this.value);});
+    function bindMeta(id,key){$(id).addEventListener("input",function(){state.meta[key]=this.value.trim();renderInfo();save();});}
+    bindMeta("miTitle","title");bindMeta("miComp","comp");bindMeta("miVenue","venue");
+    $("minsUp").addEventListener("click",function(){setMins(state.halfMinutes+1);});
+    $("minsDown").addEventListener("click",function(){setMins(state.halfMinutes-1);});
+    $("addHome").addEventListener("click",function(){addPlayer("home");});
+    $("addAway").addEventListener("click",function(){addPlayer("away");});
+    $("pnameHome").addEventListener("keydown",function(e){if(e.key==="Enter")addPlayer("home");});
+    $("pnameAway").addEventListener("keydown",function(e){if(e.key==="Enter")addPlayer("away");});
+    document.addEventListener("click",function(e){var b=e.target.closest(".prm");if(b)removePlayer(b.getAttribute("data-team"),+b.getAttribute("data-i"));});
+
+    $("pngBtn").addEventListener("click",openPng);
+    $("pngClose").addEventListener("click",function(){$("pngScrim").hidden=true;});
+    $("pngDone").addEventListener("click",function(){$("pngScrim").hidden=true;});
+
+    $("scrim").addEventListener("click",function(e){if(e.target===$("scrim"))closeGoal();});
+    $("infoScrim").addEventListener("click",function(e){if(e.target===$("infoScrim"))closeInfo();});
+    $("rosterScrim").addEventListener("click",function(e){if(e.target===$("rosterScrim"))closeRoster();});
+    $("pngScrim").addEventListener("click",function(e){if(e.target===$("pngScrim"))$("pngScrim").hidden=true;});
+    $("fAssist").addEventListener("keydown",function(e){if(e.key==="Enter")commitGoal();});
+    document.addEventListener("keydown",function(e){if(e.key!=="Escape")return;
+      if(!$("confScrim").hidden)closeConfirm();else if(!$("scrim").hidden)closeGoal();else if(!$("infoScrim").hidden)closeInfo();else if(!$("rosterScrim").hidden)closeRoster();else if(!$("pngScrim").hidden)$("pngScrim").hidden=true;});
+
+    $("quickScorers").addEventListener("click",function(e){var b=e.target.closest("button[data-name]");if(!b)return;$("fScorer").value=b.getAttribute("data-name");$("fScorer").focus();});
+    $("quickAssists").addEventListener("click",function(e){var b=e.target.closest("button[data-name]");if(!b)return;$("fAssist").value=b.getAttribute("data-name");});
+    $("logList").addEventListener("click",function(e){var b=e.target.closest("button[data-del]");if(!b)return;
+      var id=b.getAttribute("data-del");askConfirm("得点を取り消し","この得点を記録から削除します。","取り消す",function(){delGoal(id);});});
+    $("confYes").addEventListener("click",function(){var cb=confCb;closeConfirm();if(cb)cb();});
+    $("confNo").addEventListener("click",closeConfirm);
+    $("confScrim").addEventListener("click",function(e){if(e.target===$("confScrim"))closeConfirm();});
+
+    function bindName(inputId,key,btnId){
+      var el=$(inputId);
+      el.addEventListener("input",function(){state.teams[key]=el.value||(key==="home"?"ホーム":"アウェイ");$(btnId).textContent=state.teams[key];});
+      el.addEventListener("blur",function(){if(!el.value.trim()){el.value=key==="home"?"ホーム":"アウェイ";state.teams[key]=el.value;$(btnId).textContent=el.value;}renderNames();save();});
+      el.addEventListener("keydown",function(e){if(e.key==="Enter")el.blur();});
+    }
+    bindName("nameHome","home","gbHome");
+    bindName("nameAway","away","gbAway");
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+
+</body>
+</html>
