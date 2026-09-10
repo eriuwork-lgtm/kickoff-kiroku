@@ -547,7 +547,7 @@
   function renderLog(){
     var list=$("logList"),n=state.goals.length;
     $("logCount").textContent=n+" 得点";
-    if(n===0){list.innerHTML='<li class="log-empty"><i class="fa-solid fa-futbol em-ball" aria-hidden="true"></i>まだ得点はありません。<br>ゴールが決まったら下のボタンで記録します。</li>';renderMeta();return;}
+    if(n===0){list.innerHTML='<li class="log-empty"><i class="fa-solid fa-futbol em-ball" aria-hidden="true"></i>まだ得点はありません。<br>ゴールが決まったら上のゴールボタンで記録します。</li>';renderMeta();return;}
     var sorted=state.goals.slice().sort(function(a,b){if(a.half!==b.half)return a.half-b.half;return a.sec-b.sec;});
     var html="";
     for(var i=0;i<sorted.length;i++){
